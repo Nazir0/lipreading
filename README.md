@@ -1,39 +1,245 @@
-# lipreading
-Deep Learning for Visual Speech Recognition (Lipreading) - Team 18Project OverviewThis project explores the application of deep learning techniques for visual speech recognition (lipreading) at the word level. The goal is to develop a system capable of identifying spoken words solely based on the visual information of a speaker's lip movements, without relying on audio input.Motivation:Traditional speech recognition systems struggle in noisy environments or situations where audio is unavailable. Furthermore, individuals with hearing impairments face significant communication barriers. Lipreading technology offers a potential solution to enhance communication accessibility and inclusivity in various scenarios, from live events and online meetings to educational resources.Dataset:The primary dataset used for training and evaluation is the Lip Reading in the Wild (LRW) dataset. This large-scale dataset consists of short video clips (1.16s, 29 frames @ 25fps) extracted from BBC news footage, featuring hundreds of speakers and a vocabulary of 500 distinct English words.Due to the computational demands of the full dataset, this phase of the project focused on a subset of 60 target words. All video examples for these words were aggregated from the original LRW splits and then re-partitioned into new training (80%), validation (10%), and testing (10%) sets using stratified sampling.Methodology:The core of the project involves a deep learning pipeline:Preprocessing: Raw video frames are processed to isolate the mouth region. We utilize MediaPipe Face Mesh for robust facial landmark detection, identify the outer lip contour, crop a square region around the mouth with a margin (0.3), resize it to 64x64 pixels, and convert it to grayscale. Exactly 29 frames are extracted or padded for each video clip, resulting in an input tensor of shape (29, 64, 64, 1).Model Architecture: A hybrid neural network architecture combines spatial and temporal feature extraction:A 3D Convolutional Frontend processes the initial frame sequence.A TimeDistributed MobileNetV3Small backbone extracts spatial features from each frame.A Transformer Encoder Backend (4 blocks, 8 attention heads) models the temporal dependencies across the frame sequence using self-attention.Positional Embeddings provide sequence order information to the Transformer.Attention Pooling aggregates the temporal features.A final Dense Classifier with softmax activation predicts one of the 60 target words.Training: The model was trained using TensorFlow/Keras on Google Colab (T4 GPU) with the AdamW optimizer, a Cosine Decay learning rate schedule, sparse categorical crossentropy loss, and mixed-precision training. Early stopping monitored validation accuracy.Results:The trained model achieved a test accuracy of approximately 70-73% (refer to final evaluation results) on the 60-word classification task, demonstrating its ability to learn discriminative features from lip movements. Some confusion was observed between visually similar words (e.g., WITHIN/WITHOUT).Demonstration App:A Flask web application is provided to showcase the model's prediction capabilities on sample videos and simulated live webcam input.Getting the Dataset (LRW)The LRW dataset is typically made available for research purposes upon request.Source: Visit the University of Oxford Visual Geometry Group's page for the LRW dataset (search for "Oxford VGG LRW Dataset").Request Access: Follow their instructions to request access. This usually involves filling out a release agreement form.Download: Once access is granted, you will receive instructions on how to download the dataset files (often provided as .tar archives).Note: For running the demo application with curated samples, you only need the specific video files listed in SAMPLE_VIDEOS_CONFIG within app.py, placed in the correct directory structure (see Setup below).Setup InstructionsFollow these steps to set up the project environment and run the demonstration application.Prerequisites:Python 3.8+pip (Python package installer)Steps:Clone the Repository (if applicable):If the project code is in a Git repository, clone it:git clone <repository_url>
+
+
+# Lipreading
+
+## Deep Learning for Visual Speech Recognition (Lipreading) - Team 18
+
+### Project Overview
+
+This project explores the application of deep learning techniques for visual speech recognition (lipreading) at the word level. The goal is to develop a system capable of identifying spoken words solely based on the visual information of a speaker's lip movements, without relying on audio input.
+
+### Motivation
+
+Traditional speech recognition systems struggle in noisy environments or situations where audio is unavailable. Furthermore, individuals with hearing impairments face significant communication barriers. Lipreading technology offers a potential solution to enhance communication accessibility and inclusivity in various scenarios, from live events and online meetings to educational resources.
+
+### Dataset
+
+The primary dataset used is the **Lip Reading in the Wild (LRW)** dataset.
+
+* Contains short video clips (1.16s, 29 frames @ 25fps) from BBC news footage.
+* Features hundreds of speakers and 500 distinct English words.
+
+For this phase:
+
+* Focused on **60 target words**.
+* Videos were re-partitioned: **Training (80%)**, **Validation (10%)**, **Testing (10%)** using stratified sampling.
+
+---
+
+## Methodology
+
+### Preprocessing
+
+* Raw video frames are processed to isolate the mouth region.
+* [MediaPipe Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh.html) is used for facial landmark detection.
+* The outer lip contour is identified and cropped with a margin (0.3).
+* Region is resized to `64x64` pixels and converted to **grayscale**.
+* Exactly **29 frames** per clip → input shape: `(29, 64, 64, 1)`.
+
+### Model Architecture
+
+A hybrid neural network combining spatial and temporal features:
+
+* **3D Convolutional Frontend**: Processes initial frame sequence.
+* **TimeDistributed MobileNetV3Small**: Extracts per-frame spatial features.
+* **Transformer Encoder (4 blocks, 8 heads)**: Models temporal dependencies.
+* **Positional Embeddings**: Inject sequence order into the Transformer.
+* **Attention Pooling**: Aggregates temporal features.
+* **Dense Classifier**: Outputs prediction (softmax over 60 classes).
+
+### Training
+
+* Framework: **TensorFlow/Keras**
+* Hardware: **Google Colab (T4 GPU)**
+* Optimizer: `AdamW` with cosine decay
+* Loss: `SparseCategoricalCrossentropy`
+* Mixed-precision training enabled
+* **Early Stopping** on validation accuracy
+
+---
+
+## Results
+
+* Achieved **70–73% test accuracy** on the 60-word task.
+* Some confusion noted between visually similar words (e.g., *WITHIN* / *WITHOUT*).
+
+---
+
+## Demonstration App
+
+A **Flask** web application allows testing via:
+
+* Curated sample videos
+* Live webcam input
+
+---
+
+## Getting the Dataset (LRW)
+
+1. Visit the University of Oxford VGG LRW Dataset page.
+2. Request access (release form).
+3. Upon approval, download `.tar` archives.
+
+> 📝 Note: For the demo, only specific video files in `SAMPLE_VIDEOS_CONFIG` are needed.
+
+---
+
+## Setup Instructions
+
+### Prerequisites
+
+* Python 3.8+
+* pip
+
+### Steps
+
+1. **Clone the Repository** (if applicable):
+
+```bash
+git clone <repository_url>
 cd <repository_directory>
-Otherwise, ensure you have the project files (app.py, templates/, etc.) in a single directory.Create a Virtual Environment (Recommended):It's highly recommended to use a virtual environment to manage dependencies.python -m venv venv
-# Activate the environment
-# On macOS/Linux:
+```
+
+2. **Create and Activate Virtual Environment**:
+
+```bash
+python -m venv venv
+```
+
+**macOS/Linux**:
+
+```bash
 source venv/bin/activate
-# On Windows:
+```
+
+**Windows**:
+
+```bash
 .\venv\Scripts\activate
-Install Dependencies:Install the required Python libraries using the provided requirements.txt file:pip install -r requirements.txt
-(Ensure requirements.txt contains Flask, tensorflow, opencv-python, mediapipe, numpy, Werkzeug)Prepare Required Files:Model Weights: Create a directory named model_files in the project's root directory. Place the best trained model weights file (e.g., ckpt-epoch_55-val_acc_0.700.weights.h5) inside model_files/. Verify that the BEST_CHECKPOINT_FILENAME variable in app.py matches the filename exactly.Class Map: Place the class map JSON file (lrw_60words_class_to_int_map.json) inside model_files/. Verify that CLASS_MAP_FILENAME in app.py is correct.Sample Videos (for Dropdown Demo):Create a directory named static in the project root.Inside static, create a directory named videos.Inside videos, create subdirectories for each word used in the SAMPLE_VIDEOS_CONFIG dictionary in app.py (e.g., BECAUSE, BETWEEN, etc.).Inside each word directory, create a subdirectory for the set the video belongs to (e.g., test, train).Copy the re-encoded (H.264 recommended) .mp4 sample video files into the corresponding static/videos/WORD/SET/ directory.Verify that the path values in the SAMPLE_VIDEOS_CONFIG dictionary within app.py correctly point to these files relative to the static/videos folder (e.g., "BECAUSE/test/BECAUSE_00003_h264.mp4").Running the Demo ApplicationActivate Virtual Environment (if you created one):# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-.\venv\Scripts\activate
-Navigate to Project Directory:Make sure your terminal is in the directory containing app.py.Run the Flask App:python app.py
-Access the App:The application will start, and the terminal will typically show output like: * Running on http://0.0.0.0:5001/ (Press CTRL+C to quit)
- * Restarting with stat
- * Debugger is active!
- * Debugger PIN: ...
-Open your web browser and navigate to http://127.0.0.1:5001 or http://localhost:5001. If you want to access it from another device on the same network, use the computer's local IP address (e.g., http://192.168.1.100:5001).Using the Demo ApplicationThe web interface provides two ways to test the lipreading model:1. Predicting from Sample Videos:Selection: Use the dropdown menu labeled "Select a sample video:" to choose one of the curated video examples.Preview: The selected video will load into the video player below the dropdown. You can click play to watch it.Prediction: Click the "Run Lipreading" button.Result: The application will process the video and redirect to a result page displaying:The original filename.The Ground Truth word (the correct label for the sample).The Predicted Word from the model.The Confidence score (probability) associated with the prediction.Word Map: A panel on the right shows the mapping between the 60 target words and their numerical indices (0-59) used by the model for reference.2. Predicting from Live Webcam Snippet:Start Webcam: Click the "Start Webcam" button. Your browser will likely ask for permission to access your camera. Grant permission. A live feed from your webcam should appear in the video player in this section. Visual guides (e.g., a dashed box) may appear to help with centering.Prepare: Position your face so your mouth is reasonably centered within the guides. Prepare to clearly articulate one of the 60 target words.Record: Click the "Record Snippet (~1.5s)" button. The button will disable, and a "Recording..." status message will appear. Speak the target word clearly during this short recording period.Process & Predict: After ~1.5 seconds, recording stops automatically. The status will change to "Processing snippet...". The captured video snippet is sent to the backend, preprocessed, and fed into the model for prediction.Result: Once prediction is complete, the status will update ("Prediction complete!"), and the predicted word and confidence score will appear below the webcam player. Note: Ground truth is not displayed for live snippets as it's unknown to the app.Code Structure.
-├── app.py                  # Main Flask application script
-├── requirements.txt        # Python dependencies
-├── model_files/            # Directory for model assets
-│   ├── ckpt-epoch_55-val_acc_0.700.weights.h5  # BEST model weights (RENAME YOURS)
-│   └── lrw_60words_class_to_int_map.json      # Class map for 60 words
-├── static/                 # Directory for static files (like videos)
-│   └── videos/             # Base directory for sample videos
-│       ├── BECAUSE/
-│       │   └── test/
-│       │       └── BECAUSE_00003_h264.mp4
-│       ├── BETWEEN/
-│       │   └── test/
-│       │       └── BETWEEN_00023_h264.mp4
-│       └── ... (Other word/set folders and videos) ...
-├── templates/              # Directory for HTML templates
-│   ├── index.html          # Main upload/selection page
-│   └── result.html         # Page to display prediction results
-└── uploads/                # Temporary storage for live snippets (created automatically)
-Future Work (Optional)Train the model on the full 500-word LRW dataset.Adapt the architecture and processing for real-time, continuous lipreading (sentence level).Explore model optimization techniques (quantization, pruning) for deployment on resource-constrained devices.Integrate the lipreading output
+```
+
+3. **Install Dependencies**:
+
+```bash
+pip install -r requirements.txt
+```
+
+Make sure `requirements.txt` contains:
+`Flask`, `tensorflow`, `opencv-python`, `mediapipe`, `numpy`, `Werkzeug`.
+
+4. **Prepare Required Files**:
+
+#### Model Weights
+
+* Create folder: `model_files/`
+* Add your best model:
+  `ckpt-epoch_55-val_acc_0.700.weights.h5`
+* Set correct filename in `app.py` under `BEST_CHECKPOINT_FILENAME`.
+
+#### Class Map
+
+* File: `lrw_60words_class_to_int_map.json` → in `model_files/`
+* Set `CLASS_MAP_FILENAME` in `app.py`.
+
+#### Sample Videos
+
+* Folder structure:
+
+```
+static/
+└── videos/
+    ├── BECAUSE/
+    │   └── test/
+    │       └── BECAUSE_00003_h264.mp4
+    ├── BETWEEN/
+    │   └── test/
+    │       └── BETWEEN_00023_h264.mp4
+    └── ...
+```
+
+Ensure paths match `SAMPLE_VIDEOS_CONFIG` in `app.py`.
+
+---
+
+## Running the Demo Application
+
+1. **Activate virtual environment**
+2. **Navigate to project directory**
+3. **Run app**:
+
+```bash
+python app.py
+```
+
+4. **Access**:
+
+Open a browser at:
+
+* `http://127.0.0.1:5001`
+* Or from other devices via local IP (e.g., `http://192.168.1.100:5001`)
+
+---
+
+## Using the Demo Application
+
+### 1. Sample Video Prediction
+
+* Choose a word from the dropdown.
+* Click **"Run Lipreading"**
+* See:
+
+  * Filename
+  * Ground Truth
+  * Predicted Word
+  * Confidence Score
+  * Word Mapping Panel
+
+### 2. Live Webcam Snippet
+
+* Click **Start Webcam**
+* Position face in frame
+* Click **"Record Snippet (\~1.5s)"**
+* After processing, view predicted word and confidence score
+
+---
+
+## Code Structure
+
+```
+├── app.py
+├── requirements.txt
+├── model_files/
+│   ├── ckpt-epoch_55-val_acc_0.700.weights.h5
+│   └── lrw_60words_class_to_int_map.json
+├── static/
+│   └── videos/
+│       ├── BECAUSE/test/BECAUSE_00003_h264.mp4
+│       ├── BETWEEN/test/BETWEEN_00023_h264.mp4
+│       └── ...
+├── templates/
+│   ├── index.html
+│   └── result.html
+└── uploads/
+```
+
+---
+
+## Future Work
+
+* Train on the full **500-word** LRW dataset.
+* Extend to **sentence-level** real-time lipreading.
+* Optimize model for edge devices (e.g., quantization, pruning).
+* Combine with language models for better semantic output.
+
+---
+
+## Team
+
+* **Aman Shah**
+* **Mouhamed Nazir Mbow**
+* **Jalal Cherkaoui**
+* **Anwar Benhnini**
+* **Mohamed Yassir Ousdid**
+
+---
+
