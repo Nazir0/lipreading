@@ -1,0 +1,7 @@
+# requirements.txt
+Flask
+Werkzeug
+tensorflow==2.18.0
+numpy==1.26.4
+opencv-python==4.11.0
+mediapipe==0.10.21
